@@ -49,10 +49,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: Card(
+                  elevation: 8,
                   color: Colors.white.withOpacity(0.92),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -99,11 +100,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             decoration: const InputDecoration(labelText: 'Confirm Password', prefixIcon: Icon(Icons.lock_person_outlined)),
                             validator: (v) => v != _passwordController.text ? 'Passwords do not match' : null,
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
                           SizedBox(
                             height: 48,
                             width: double.infinity,
-                            child: ElevatedButton(
+                            child: FilledButton(
                               onPressed: () {
                                 if (_formKey.currentState?.validate() ?? false) {
                                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Registering...')));

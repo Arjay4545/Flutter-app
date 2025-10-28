@@ -46,10 +46,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
                   child: Card(
-                    color: Colors.white.withOpacity(0.9),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 8,
+                    color: Colors.white.withOpacity(0.92),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     child: Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
                       child: Form(
                         key: _formKey,
                         child: Column(
@@ -59,15 +60,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             Text(
                               'Soil Nutrient Monitor',
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 6),
                             Text(
                               'Log in to continue',
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 24),
                             TextFormField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
@@ -96,10 +97,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 24),
                             SizedBox(
                               height: 48,
-                              child: ElevatedButton(
+                              child: FilledButton(
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.lightBlue,
+                                  foregroundColor: Colors.white,
+                                ),
                                 onPressed: () {
                                   if (_formKey.currentState?.validate() ?? false) {
                                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Logging in...')));
@@ -109,9 +114,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            TextButton(
-                              onPressed: () {},
-                              child: const Text('Forgot Password?'),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () {},
+                                child: const Text('Forgot Password?'),
+                              ),
                             ),
                             const Divider(height: 32),
                             Center(
