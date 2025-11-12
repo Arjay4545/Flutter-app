@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import '../widgets/eggplant_illustration.dart';
+import '../widgets/arduino_connection_widget.dart';
+import '../widgets/esp32_device_widget.dart';
 import '../models/nutrient_reading.dart';
+import '../services/firebase_service.dart';
+import '../services/arduino_service.dart';
+import '../services/esp32_service.dart';
 import 'analytics_screen.dart';
 
 class SoilMonitoringScreen extends StatefulWidget {
@@ -19,17 +24,163 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
   // Daily readings tracking
   List<NutrientReading> dailyReadings = [];
   DateTime lastReadingDate = DateTime.now();
+  
+  // Service instances
+  final FirebaseService _firebaseService = FirebaseService();
+  final ArduinoService _arduinoService = ArduinoService();
+  final ESP32Service _esp32Service = ESP32Service();
+  bool _isLoading = false;
+  bool _isArduinoConnected = false;
+  bool _isESP32Connected = false;
+  DateTime? _lastArduinoUpdate;
+  DateTime? _lastESP32Update;
+  String _dataSource = 'Manual'; // 'Manual', 'Arduino', or 'ESP32'
 
   @override
   void initState() {
     super.initState();
     _initializeDailyReadings();
+    _initializeArduino();
+    _initializeESP32();
   }
 
-  void _initializeDailyReadings() {
+  void _initializeDailyReadings() async {
     // Generate sample historical data
     dailyReadings = AnalyticsData.generateSampleData();
     _addTodaysReading();
+    
+    // Try to load current data from Firebase
+    await _loadCurrentDataFromFirebase();
+  }
+
+  void _initializeArduino() {
+    // Listen to Arduino connection status
+    _arduinoService.connectionStream.listen((connected) {
+      if (mounted) {
+        setState(() {
+          _isArduinoConnected = connected;
+        });
+      }
+    });
+
+    // Listen to Arduino sensor data
+    _arduinoService.dataStream.listen((data) {
+      if (mounted && data.containsKey('nitrogen') && data.containsKey('phosphorus') && data.containsKey('potassium')) {
+        setState(() {
+          nitrogenLevel = data['nitrogen']!;
+          phosphorusLevel = data['phosphorus']!;
+          potassiumLevel = data['potassium']!;
+          _lastArduinoUpdate = DateTime.now();
+        });
+        
+        // Auto-save to Firebase when Arduino data is received
+        _saveDataToFirebase();
+        
+        // Add to daily readings
+        _addTodaysReading();
+        
+        // Show notification
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sensor data updated from Arduino'),
+            backgroundColor: Color(0xFF4DB6AC),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    });
+  }
+
+  void _initializeESP32() {
+    // Start listening to ESP32 data from Firebase
+    _esp32Service.startListening();
+    
+    // Listen to ESP32 sensor data
+    _esp32Service.sensorDataStream.listen((data) {
+      if (mounted && data.containsKey('nitrogen') && data.containsKey('phosphorus') && data.containsKey('potassium')) {
+        setState(() {
+          nitrogenLevel = (data['nitrogen'] as num).toDouble();
+          phosphorusLevel = (data['phosphorus'] as num).toDouble();
+          potassiumLevel = (data['potassium'] as num).toDouble();
+          _lastESP32Update = DateTime.now();
+          _isESP32Connected = true;
+          _dataSource = 'ESP32';
+        });
+        
+        // Add to daily readings
+        _addTodaysReading();
+        
+        // Show notification
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Data updated from ESP32: ${data['deviceId'] ?? 'Unknown'}'),
+            backgroundColor: const Color(0xFF4DB6AC),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    });
+
+    // Listen to ESP32 devices status
+    _esp32Service.devicesStream.listen((devices) {
+      if (mounted) {
+        final onlineDevices = devices.where((d) => d['isOnline'] == true).toList();
+        setState(() {
+          _isESP32Connected = onlineDevices.isNotEmpty;
+          if (!_isESP32Connected) {
+            _dataSource = _isArduinoConnected ? 'Arduino' : 'Manual';
+          }
+        });
+      }
+    });
+  }
+
+  Future<void> _loadCurrentDataFromFirebase() async {
+    try {
+      final currentData = await _firebaseService.getCurrentSoilData();
+      if (currentData != null) {
+        setState(() {
+          nitrogenLevel = (currentData['nitrogen'] as num).toDouble();
+          phosphorusLevel = (currentData['phosphorus'] as num).toDouble();
+          potassiumLevel = (currentData['potassium'] as num).toDouble();
+        });
+        print('Loaded current data from Firebase');
+      }
+    } catch (e) {
+      print('Error loading data from Firebase: $e');
+    }
+  }
+
+  Future<void> _saveDataToFirebase() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      await _firebaseService.saveSoilData(
+        nitrogen: nitrogenLevel,
+        phosphorus: phosphorusLevel,
+        potassium: potassiumLevel,
+      );
+      
+      print('Data saved to Firebase successfully');
+    } catch (e) {
+      print('Error saving data to Firebase: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving to Firebase: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _addTodaysReading() {
@@ -115,11 +266,14 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
                         tooltip: 'View Analytics',
                       ),
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          _showArduinoSettings(context);
+                        },
                         icon: const Icon(
                           Icons.settings,
                           color: Colors.white,
                         ),
+                        tooltip: 'Arduino Settings',
                       ),
                     ],
                   ),
@@ -173,16 +327,30 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
+                                color: _getDataSourceColor().withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Text(
-                                'Live',
-                                style: TextStyle(
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: _getDataSourceColor(),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _dataSource,
+                                    style: TextStyle(
+                                      color: _getDataSourceColor(),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -248,7 +416,7 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
                                   ),
                                   const Spacer(),
                                   Text(
-                                    '${dailyReadings.length} days tracked',
+                                    _getLastUpdateText(),
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600],
@@ -274,7 +442,7 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
                           children: [
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: () {
+                                onPressed: _isLoading ? null : () async {
                                   // Refresh data and save daily reading
                                   setState(() {
                                     nitrogenLevel = (50 + (50 * (DateTime.now().millisecond / 1000))).clamp(0, 100);
@@ -285,17 +453,31 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
                                     _addTodaysReading();
                                   });
                                   
+                                  // Save to Firebase
+                                  await _saveDataToFirebase();
+                                  
                                   // Show success message
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Data refreshed and saved to analytics!'),
-                                      backgroundColor: Color(0xFF4DB6AC),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Data refreshed and saved to Firebase!'),
+                                        backgroundColor: Color(0xFF4DB6AC),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
                                 },
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Refresh'),
+                                icon: _isLoading 
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      )
+                                    : const Icon(Icons.refresh),
+                                label: Text(_isLoading ? 'Saving...' : 'Refresh'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF4DB6AC),
                                   foregroundColor: Colors.white,
@@ -516,5 +698,114 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
         ],
       ),
     );
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inDays}d ago';
+    }
+  }
+
+  void _showArduinoSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DefaultTabController(
+        length: 2,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          height: MediaQuery.of(context).size.height * 0.8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Sensor Connection Settings',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const TabBar(
+                labelColor: Color(0xFF4DB6AC),
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Color(0xFF4DB6AC),
+                tabs: [
+                  Tab(
+                    icon: Icon(Icons.usb),
+                    text: 'Arduino (USB)',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.wifi),
+                    text: 'ESP32 (WiFi)',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    // Arduino tab
+                    ArduinoConnectionWidget(
+                      onDataReceived: (data) {
+                        // Data is already handled by the stream listener
+                        // This is just for the widget's internal functionality
+                      },
+                    ),
+                    // ESP32 tab
+                    const ESP32DeviceWidget(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getDataSourceColor() {
+    switch (_dataSource) {
+      case 'ESP32':
+        return Colors.blue;
+      case 'Arduino':
+        return Colors.green;
+      case 'Manual':
+      default:
+        return Colors.orange;
+    }
+  }
+
+  String _getLastUpdateText() {
+    DateTime? lastUpdate;
+    
+    // Get the most recent update time
+    if (_lastESP32Update != null && _lastArduinoUpdate != null) {
+      lastUpdate = _lastESP32Update!.isAfter(_lastArduinoUpdate!) 
+          ? _lastESP32Update 
+          : _lastArduinoUpdate;
+    } else if (_lastESP32Update != null) {
+      lastUpdate = _lastESP32Update;
+    } else if (_lastArduinoUpdate != null) {
+      lastUpdate = _lastArduinoUpdate;
+    }
+    
+    if (lastUpdate != null) {
+      return 'Last update: ${_formatTime(lastUpdate)}';
+    } else {
+      return '${dailyReadings.length} days tracked';
+    }
   }
 }
