@@ -1,7 +1,9 @@
 import 'package:firebase_database/firebase_database.dart';
+import 'package:logging/logging.dart';
 import '../models/nutrient_reading.dart';
 
 class FirebaseService {
+  final _logger = Logger('FirebaseService');
   static final FirebaseService _instance = FirebaseService._internal();
   factory FirebaseService() => _instance;
   FirebaseService._internal();
@@ -27,13 +29,15 @@ class FirebaseService {
 
       // Save to current readings
       await _database.child('soil_monitoring/current').set(data);
-      
+
       // Save to historical data with timestamp as key
-      await _database.child('soil_monitoring/history/${now.millisecondsSinceEpoch}').set(data);
-      
-      print('Soil data saved to Firebase successfully');
+      await _database
+          .child('soil_monitoring/history/${now.millisecondsSinceEpoch}')
+          .set(data);
+
+      _logger.info('Soil data saved to Firebase successfully');
     } catch (e) {
-      print('Error saving soil data to Firebase: $e');
+      _logger.severe('Error saving soil data to Firebase: $e');
       rethrow;
     }
   }
@@ -47,44 +51,48 @@ class FirebaseService {
       }
       return null;
     } catch (e) {
-      print('Error getting current soil data from Firebase: $e');
+      _logger.severe('Error getting current soil data from Firebase: $e');
       return null;
     }
   }
 
   // Get historical soil monitoring data from Firebase
-  Future<List<NutrientReading>> getHistoricalSoilData({int? limitToLast}) async {
+  Future<List<NutrientReading>> getHistoricalSoilData({
+    int? limitToLast,
+  }) async {
     try {
       Query query = _database.child('soil_monitoring/history').orderByKey();
-      
+
       if (limitToLast != null) {
         query = query.limitToLast(limitToLast);
       }
-      
+
       final snapshot = await query.get();
-      
+
       if (snapshot.exists) {
         final data = Map<String, dynamic>.from(snapshot.value as Map);
         final readings = <NutrientReading>[];
-        
+
         data.forEach((key, value) {
           final reading = Map<String, dynamic>.from(value);
-          readings.add(NutrientReading(
-            date: DateTime.fromMillisecondsSinceEpoch(reading['timestamp']),
-            nitrogen: (reading['nitrogen'] as num).toDouble(),
-            phosphorus: (reading['phosphorus'] as num).toDouble(),
-            potassium: (reading['potassium'] as num).toDouble(),
-          ));
+          readings.add(
+            NutrientReading(
+              date: DateTime.fromMillisecondsSinceEpoch(reading['timestamp']),
+              nitrogen: (reading['nitrogen'] as num).toDouble(),
+              phosphorus: (reading['phosphorus'] as num).toDouble(),
+              potassium: (reading['potassium'] as num).toDouble(),
+            ),
+          );
         });
-        
+
         // Sort by date (newest first)
         readings.sort((a, b) => b.date.compareTo(a.date));
         return readings;
       }
-      
+
       return [];
     } catch (e) {
-      print('Error getting historical soil data from Firebase: $e');
+      _logger.severe('Error getting historical soil data from Firebase: $e');
       return [];
     }
   }
@@ -104,21 +112,24 @@ class FirebaseService {
     try {
       final cutoffDate = DateTime.now().subtract(Duration(days: keepLastDays));
       final cutoffTimestamp = cutoffDate.millisecondsSinceEpoch;
-      
-      final snapshot = await _database.child('soil_monitoring/history')
+
+      final snapshot = await _database
+          .child('soil_monitoring/history')
           .orderByKey()
           .endAt(cutoffTimestamp.toString())
           .get();
-      
+
       if (snapshot.exists) {
         final data = Map<String, dynamic>.from(snapshot.value as Map);
         for (String key in data.keys) {
           await _database.child('soil_monitoring/history/$key').remove();
         }
-        print('Cleaned up old data before ${cutoffDate.toIso8601String()}');
+        _logger.info(
+          'Cleaned up old data before ${cutoffDate.toIso8601String()}',
+        );
       }
     } catch (e) {
-      print('Error cleaning up old data: $e');
+      _logger.severe('Error cleaning up old data: $e');
     }
   }
 
@@ -138,9 +149,9 @@ class FirebaseService {
       };
 
       await _database.child('devices/$deviceId').set(data);
-      print('Device info saved to Firebase successfully');
+      _logger.info('Device info saved to Firebase successfully');
     } catch (e) {
-      print('Error saving device info to Firebase: $e');
+      _logger.severe('Error saving device info to Firebase: $e');
       rethrow;
     }
   }
@@ -151,11 +162,13 @@ class FirebaseService {
       final snapshot = await _database.child('devices').get();
       if (snapshot.exists) {
         final data = Map<String, dynamic>.from(snapshot.value as Map);
-        return data.values.map((device) => Map<String, dynamic>.from(device)).toList();
+        return data.values
+            .map((device) => Map<String, dynamic>.from(device))
+            .toList();
       }
       return [];
     } catch (e) {
-      print('Error getting devices from Firebase: $e');
+      _logger.severe('Error getting devices from Firebase: $e');
       return [];
     }
   }

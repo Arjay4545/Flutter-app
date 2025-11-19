@@ -3,14 +3,12 @@ import '../services/arduino_service.dart';
 
 class ArduinoConnectionWidget extends StatefulWidget {
   final Function(Map<String, double>)? onDataReceived;
-  
-  const ArduinoConnectionWidget({
-    super.key,
-    this.onDataReceived,
-  });
+
+  const ArduinoConnectionWidget({super.key, this.onDataReceived});
 
   @override
-  State<ArduinoConnectionWidget> createState() => _ArduinoConnectionWidgetState();
+  State<ArduinoConnectionWidget> createState() =>
+      _ArduinoConnectionWidgetState();
 }
 
 class _ArduinoConnectionWidgetState extends State<ArduinoConnectionWidget> {
@@ -68,13 +66,13 @@ class _ArduinoConnectionWidgetState extends State<ArduinoConnectionWidget> {
 
   Future<void> _connect() async {
     if (_selectedPort == null) return;
-    
+
     setState(() {
       _isConnecting = true;
     });
 
     final success = await _arduinoService.connect(_selectedPort!);
-    
+
     setState(() {
       _isConnecting = false;
     });
@@ -91,7 +89,7 @@ class _ArduinoConnectionWidgetState extends State<ArduinoConnectionWidget> {
 
   Future<void> _disconnect() async {
     await _arduinoService.disconnect();
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -108,7 +106,7 @@ class _ArduinoConnectionWidgetState extends State<ArduinoConnectionWidget> {
     });
 
     final success = await _arduinoService.autoConnect();
-    
+
     setState(() {
       _isConnecting = false;
     });
@@ -116,7 +114,9 @@ class _ArduinoConnectionWidgetState extends State<ArduinoConnectionWidget> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success ? 'Auto-connected to Arduino' : 'No Arduino found'),
+          content: Text(
+            success ? 'Auto-connected to Arduino' : 'No Arduino found',
+          ),
           backgroundColor: success ? Colors.green : Colors.red,
         ),
       );
@@ -142,16 +142,18 @@ class _ArduinoConnectionWidgetState extends State<ArduinoConnectionWidget> {
                 const SizedBox(width: 8),
                 const Text(
                   'Arduino Connection',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: _isConnected ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                    color: _isConnected
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -180,42 +182,39 @@ class _ArduinoConnectionWidgetState extends State<ArduinoConnectionWidget> {
               ],
             ),
             const SizedBox(height: 12),
-            
+
             // Status message
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 _statusMessage,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ),
             const SizedBox(height: 16),
-            
+
             if (!_isConnected) ...[
               // Port selection
               Row(
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _selectedPort,
+                      initialValue: _selectedPort,
                       decoration: const InputDecoration(
                         labelText: 'Select Port',
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                       ),
                       items: _availablePorts.map((port) {
-                        return DropdownMenuItem(
-                          value: port,
-                          child: Text(port),
-                        );
+                        return DropdownMenuItem(value: port, child: Text(port));
                       }).toList(),
                       onChanged: (value) {
                         setState(() {
@@ -233,14 +232,14 @@ class _ArduinoConnectionWidgetState extends State<ArduinoConnectionWidget> {
                 ],
               ),
               const SizedBox(height: 12),
-              
+
               // Connection buttons
               Row(
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: _isConnecting ? null : _connect,
-                      icon: _isConnecting 
+                      icon: _isConnecting
                           ? const SizedBox(
                               width: 16,
                               height: 16,

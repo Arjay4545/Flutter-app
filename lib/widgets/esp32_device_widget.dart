@@ -24,7 +24,7 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
   void _initializeESP32Service() {
     // Start listening to ESP32 data
     _esp32Service.startListening();
-    
+
     // Listen to devices stream
     _esp32Service.devicesStream.listen((devices) {
       if (mounted) {
@@ -62,13 +62,15 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
 
   Future<void> _sendCommand(String deviceId, String command) async {
     final success = await _esp32Service.sendCommandToDevice(deviceId, command);
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success 
-              ? 'Command "$command" sent to device' 
-              : 'Failed to send command'),
+          content: Text(
+            success
+                ? 'Command "$command" sent to device'
+                : 'Failed to send command',
+          ),
           backgroundColor: success ? Colors.green : Colors.red,
         ),
       );
@@ -87,24 +89,21 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
             // Header
             Row(
               children: [
-                const Icon(
-                  Icons.developer_board,
-                  color: Color(0xFF4DB6AC),
-                ),
+                const Icon(Icons.developer_board, color: Color(0xFF4DB6AC)),
                 const SizedBox(width: 8),
                 const Text(
                   'ESP32 Devices',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 if (_statistics != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.1),
+                      color: Colors.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -119,25 +118,22 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
               ],
             ),
             const SizedBox(height: 12),
-            
+
             // Status message
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 _statusMessage,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Loading or devices list
             if (_isLoading)
               const Center(
@@ -161,17 +157,13 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: Colors.orange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.search_off,
-            color: Colors.orange,
-            size: 48,
-          ),
+          const Icon(Icons.search_off, color: Colors.orange, size: 48),
           const SizedBox(height: 12),
           const Text(
             'No ESP32 Devices Found',
@@ -185,10 +177,7 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
           Text(
             'Make sure your ESP32 is connected to WiFi and sending data to Firebase',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
@@ -215,25 +204,39 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
             padding: const EdgeInsets.all(12),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFF4DB6AC).withOpacity(0.1),
+              color: const Color(0xFF4DB6AC).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF4DB6AC).withOpacity(0.3)),
+              border: Border.all(
+                color: const Color(0xFF4DB6AC).withValues(alpha: 0.3),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem('Total', _statistics!['totalDevices'].toString(), Icons.devices),
-                _buildStatItem('Online', _statistics!['onlineDevices'].toString(), Icons.wifi),
-                _buildStatItem('Offline', _statistics!['offlineDevices'].toString(), Icons.wifi_off),
+                _buildStatItem(
+                  'Total',
+                  _statistics!['totalDevices'].toString(),
+                  Icons.devices,
+                ),
+                _buildStatItem(
+                  'Online',
+                  _statistics!['onlineDevices'].toString(),
+                  Icons.wifi,
+                ),
+                _buildStatItem(
+                  'Offline',
+                  _statistics!['offlineDevices'].toString(),
+                  Icons.wifi_off,
+                ),
               ],
             ),
           ),
-        
+
         // Devices list
-        ..._devices.map((device) => _buildDeviceCard(device)).toList(),
-        
+        ..._devices.map((device) => _buildDeviceCard(device)),
+
         const SizedBox(height: 12),
-        
+
         // Refresh button
         SizedBox(
           width: double.infinity,
@@ -263,13 +266,7 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
             color: Color(0xFF4DB6AC),
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
       ],
     );
   }
@@ -281,10 +278,10 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
     final lastSeen = device['lastSeen'] as int? ?? 0;
     final firmware = device['firmware'] as String? ?? 'Unknown';
     final sensors = device['sensors'] as String? ?? 'Unknown';
-    
+
     final lastSeenDate = DateTime.fromMillisecondsSinceEpoch(lastSeen * 1000);
     final timeDiff = DateTime.now().difference(lastSeenDate);
-    
+
     String lastSeenText;
     if (timeDiff.inMinutes < 1) {
       lastSeenText = 'Just now';
@@ -300,10 +297,14 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isOnline ? Colors.green.withOpacity(0.05) : Colors.red.withOpacity(0.05),
+        color: isOnline
+            ? Colors.green.withValues(alpha: 0.05)
+            : Colors.red.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isOnline ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3),
+          color: isOnline
+              ? Colors.green.withValues(alpha: 0.3)
+              : Colors.red.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -315,7 +316,9 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: isOnline ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                  color: isOnline
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -338,10 +341,7 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
                     ),
                     Text(
                       location,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -349,7 +349,9 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isOnline ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                  color: isOnline
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -378,22 +380,18 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           // Device info
           Row(
             children: [
-              Expanded(
-                child: _buildDeviceInfo('Last Seen', lastSeenText),
-              ),
-              Expanded(
-                child: _buildDeviceInfo('Firmware', firmware),
-              ),
+              Expanded(child: _buildDeviceInfo('Last Seen', lastSeenText)),
+              Expanded(child: _buildDeviceInfo('Firmware', firmware)),
             ],
           ),
           const SizedBox(height: 8),
           _buildDeviceInfo('Sensors', sensors),
           const SizedBox(height: 12),
-          
+
           // Action buttons
           if (isOnline)
             Row(
@@ -414,7 +412,10 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
                   child: OutlinedButton.icon(
                     onPressed: () => _sendCommand(deviceId, 'CALIBRATE'),
                     icon: const Icon(Icons.tune, size: 16),
-                    label: const Text('Calibrate', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      'Calibrate',
+                      style: TextStyle(fontSize: 12),
+                    ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF4DB6AC),
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -442,10 +443,7 @@ class _ESP32DeviceWidgetState extends State<ESP32DeviceWidget> {
         ),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
       ],
     );

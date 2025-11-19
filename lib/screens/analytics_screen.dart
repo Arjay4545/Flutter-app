@@ -22,7 +22,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     final filteredReadings = _getFilteredReadings();
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFF4DB6AC),
       body: SafeArea(
@@ -56,7 +56,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              
+
               // Analytics Content
               Expanded(
                 child: Container(
@@ -78,7 +78,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                 'Period',
                                 selectedPeriod,
                                 ['7 Days', '14 Days', '30 Days'],
-                                (value) => setState(() => selectedPeriod = value!),
+                                (value) =>
+                                    setState(() => selectedPeriod = value!),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -87,13 +88,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                 'Nutrient',
                                 selectedNutrient,
                                 ['Nitrogen', 'Phosphorus', 'Potassium'],
-                                (value) => setState(() => selectedNutrient = value!),
+                                (value) =>
+                                    setState(() => selectedNutrient = value!),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 24),
-                        
+
                         // Chart Area
                         Container(
                           height: 200,
@@ -109,7 +111,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        
+
                         // Statistics Cards
                         const Text(
                           'Statistics',
@@ -120,7 +122,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
+
                         Expanded(
                           child: GridView.count(
                             crossAxisCount: 2,
@@ -128,10 +130,26 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             mainAxisSpacing: 16,
                             childAspectRatio: 1.5,
                             children: [
-                              _buildStatCard('Average', _getAverage(filteredReadings), Colors.blue),
-                              _buildStatCard('Highest', _getHighest(filteredReadings), Colors.green),
-                              _buildStatCard('Lowest', _getLowest(filteredReadings), Colors.orange),
-                              _buildStatCard('Trend', _getTrend(filteredReadings), Colors.purple),
+                              _buildStatCard(
+                                'Average',
+                                _getAverage(filteredReadings),
+                                Colors.blue,
+                              ),
+                              _buildStatCard(
+                                'Highest',
+                                _getHighest(filteredReadings),
+                                Colors.green,
+                              ),
+                              _buildStatCard(
+                                'Lowest',
+                                _getLowest(filteredReadings),
+                                Colors.orange,
+                              ),
+                              _buildStatCard(
+                                'Trend',
+                                _getTrend(filteredReadings),
+                                Colors.purple,
+                              ),
                             ],
                           ),
                         ),
@@ -147,7 +165,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildDropdown(String label, String value, List<String> items, Function(String?) onChanged) {
+  Widget _buildDropdown(
+    String label,
+    String value,
+    List<String> items,
+    Function(String?) onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -171,10 +194,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              items: items.map((item) => DropdownMenuItem(
-                value: item,
-                child: Text(item),
-              )).toList(),
+              items: items
+                  .map(
+                    (item) => DropdownMenuItem(value: item, child: Text(item)),
+                  )
+                  .toList(),
               onChanged: onChanged,
             ),
           ),
@@ -185,9 +209,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   Widget _buildChart(List<NutrientReading> data) {
     if (data.isEmpty) {
-      return const Center(
-        child: Text('No data available'),
-      );
+      return const Center(child: Text('No data available'));
     }
 
     final maxValue = _getMaxValue(data);
@@ -205,7 +227,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Simple Line Chart
         Expanded(
           child: CustomPaint(
@@ -218,7 +240,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
           ),
         ),
-        
+
         // X-axis labels
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -241,18 +263,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            _getStatIcon(title),
-            color: color,
-            size: 24,
-          ),
+          Icon(_getStatIcon(title), color: color, size: 24),
           const SizedBox(height: 8),
           Text(
             title,
@@ -278,26 +296,37 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   IconData _getStatIcon(String title) {
     switch (title) {
-      case 'Average': return Icons.trending_flat;
-      case 'Highest': return Icons.trending_up;
-      case 'Lowest': return Icons.trending_down;
-      case 'Trend': return Icons.show_chart;
-      default: return Icons.analytics;
+      case 'Average':
+        return Icons.trending_flat;
+      case 'Highest':
+        return Icons.trending_up;
+      case 'Lowest':
+        return Icons.trending_down;
+      case 'Trend':
+        return Icons.show_chart;
+      default:
+        return Icons.analytics;
     }
   }
 
   List<NutrientReading> _getFilteredReadings() {
     final days = int.parse(selectedPeriod.split(' ')[0]);
     final cutoffDate = DateTime.now().subtract(Duration(days: days));
-    return readings.where((reading) => reading.date.isAfter(cutoffDate)).toList();
+    return readings
+        .where((reading) => reading.date.isAfter(cutoffDate))
+        .toList();
   }
 
   double _getNutrientValue(NutrientReading reading) {
     switch (selectedNutrient) {
-      case 'Nitrogen': return reading.nitrogen;
-      case 'Phosphorus': return reading.phosphorus;
-      case 'Potassium': return reading.potassium;
-      default: return reading.nitrogen;
+      case 'Nitrogen':
+        return reading.nitrogen;
+      case 'Phosphorus':
+        return reading.phosphorus;
+      case 'Potassium':
+        return reading.potassium;
+      default:
+        return reading.nitrogen;
     }
   }
 
@@ -330,7 +359,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final first = _getNutrientValue(data.first);
     final last = _getNutrientValue(data.last);
     final diff = last - first;
-    
+
     if (diff > 5) return '↗ Rising';
     if (diff < -5) return '↘ Falling';
     return '→ Stable';
@@ -405,19 +434,27 @@ class LineChartPainter extends CustomPainter {
 
   double _getNutrientValue(NutrientReading reading) {
     switch (nutrient) {
-      case 'Nitrogen': return reading.nitrogen;
-      case 'Phosphorus': return reading.phosphorus;
-      case 'Potassium': return reading.potassium;
-      default: return reading.nitrogen;
+      case 'Nitrogen':
+        return reading.nitrogen;
+      case 'Phosphorus':
+        return reading.phosphorus;
+      case 'Potassium':
+        return reading.potassium;
+      default:
+        return reading.nitrogen;
     }
   }
 
   Color _getNutrientColor() {
     switch (nutrient) {
-      case 'Nitrogen': return Colors.blue;
-      case 'Phosphorus': return Colors.orange;
-      case 'Potassium': return Colors.purple;
-      default: return Colors.blue;
+      case 'Nitrogen':
+        return Colors.blue;
+      case 'Phosphorus':
+        return Colors.orange;
+      case 'Potassium':
+        return Colors.purple;
+      default:
+        return Colors.blue;
     }
   }
 

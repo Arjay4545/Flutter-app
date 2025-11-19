@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -17,11 +16,11 @@ class ArduinoService {
   String? _connectedPortName;
 
   // Stream controllers for real-time data
-  final StreamController<Map<String, double>> _dataController = 
+  final StreamController<Map<String, double>> _dataController =
       StreamController<Map<String, double>>.broadcast();
-  final StreamController<bool> _connectionController = 
+  final StreamController<bool> _connectionController =
       StreamController<bool>.broadcast();
-  final StreamController<String> _statusController = 
+  final StreamController<String> _statusController =
       StreamController<String>.broadcast();
 
   // Getters for streams
@@ -48,8 +47,9 @@ class ArduinoService {
   Future<bool> connect(String portName, {int baudRate = 9600}) async {
     try {
       // Request permissions if needed
-      if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || 
-                      defaultTargetPlatform == TargetPlatform.iOS)) {
+      if (!kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS)) {
         final status = await Permission.storage.request();
         if (!status.isGranted) {
           _updateStatus('Storage permission denied');
@@ -63,9 +63,9 @@ class ArduinoService {
       }
 
       _updateStatus('Connecting to $portName...');
-      
+
       _port = SerialPort(portName);
-      
+
       // Configure port settings
       final config = SerialPortConfig()
         ..baudRate = baudRate
@@ -73,13 +73,15 @@ class ArduinoService {
         ..parity = SerialPortParity.none
         ..stopBits = 1
         ..setFlowControl(SerialPortFlowControl.none);
-      
+
       _port!.config = config;
-      
+
       // Open the port
       if (!_port!.openReadWrite()) {
         final error = SerialPort.lastError;
-        _updateStatus('Failed to open port: ${error?.message ?? 'Unknown error'}');
+        _updateStatus(
+          'Failed to open port: ${error?.message ?? 'Unknown error'}',
+        );
         return false;
       }
 
@@ -90,7 +92,7 @@ class ArduinoService {
 
       // Start reading data
       _startReading();
-      
+
       return true;
     } catch (e) {
       _updateStatus('Connection error: $e');
@@ -102,11 +104,11 @@ class ArduinoService {
   Future<void> disconnect() async {
     try {
       _updateStatus('Disconnecting...');
-      
+
       await _subscription?.cancel();
       _reader?.close();
       _port?.close();
-      
+
       _isConnected = false;
       _connectedPortName = null;
       _connectionController.add(false);
@@ -147,10 +149,10 @@ class ArduinoService {
       // Parse JSON data from Arduino
       // Expected format: {"nitrogen": 75.5, "phosphorus": 60.2, "potassium": 85.1}
       final jsonData = jsonDecode(dataString);
-      
+
       if (jsonData is Map<String, dynamic>) {
         final sensorData = <String, double>{};
-        
+
         // Extract NPK values
         if (jsonData.containsKey('nitrogen')) {
           sensorData['nitrogen'] = (jsonData['nitrogen'] as num).toDouble();
@@ -161,10 +163,11 @@ class ArduinoService {
         if (jsonData.containsKey('potassium')) {
           sensorData['potassium'] = (jsonData['potassium'] as num).toDouble();
         }
-        
+
         // Add timestamp
-        sensorData['timestamp'] = DateTime.now().millisecondsSinceEpoch.toDouble();
-        
+        sensorData['timestamp'] = DateTime.now().millisecondsSinceEpoch
+            .toDouble();
+
         // Emit data to listeners
         _dataController.add(sensorData);
         _updateStatus('Data parsed successfully');
@@ -187,7 +190,7 @@ class ArduinoService {
           'potassium': double.parse(parts[2].trim()),
           'timestamp': DateTime.now().millisecondsSinceEpoch.toDouble(),
         };
-        
+
         _dataController.add(sensorData);
         _updateStatus('Simple format data parsed');
       }
@@ -242,14 +245,14 @@ class ArduinoService {
   /// Auto-discover and connect to Arduino
   Future<bool> autoConnect() async {
     final ports = getAvailablePorts();
-    
+
     for (final port in ports) {
       _updateStatus('Trying to connect to $port...');
       if (await connect(port)) {
         // Send a test command and wait for response
         await sendCommand('PING');
         await Future.delayed(const Duration(seconds: 2));
-        
+
         if (_isConnected) {
           _updateStatus('Auto-connected to $port');
           return true;
@@ -257,7 +260,7 @@ class ArduinoService {
       }
       await disconnect();
     }
-    
+
     _updateStatus('Auto-connect failed - no Arduino found');
     return false;
   }
