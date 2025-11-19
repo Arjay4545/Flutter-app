@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/arduino_service.dart';
+import '../services/arduino_service_web.dart';
 
 class ArduinoConnectionWidget extends StatefulWidget {
   final Function(Map<String, double>)? onDataReceived;

@@ -4,7 +4,7 @@ import '../widgets/arduino_connection_widget.dart';
 import '../widgets/esp32_device_widget.dart';
 import '../models/nutrient_reading.dart';
 import '../services/firebase_service.dart';
-import '../services/arduino_service.dart';
+import '../services/arduino_service_web.dart';
 import '../services/esp32_service.dart';
 import 'analytics_screen.dart';
 import 'package:logging/logging.dart';
