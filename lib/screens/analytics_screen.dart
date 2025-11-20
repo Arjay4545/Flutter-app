@@ -24,142 +24,183 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final filteredReadings = _getFilteredReadings();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF4DB6AC),
+      backgroundColor: const Color(0xFF14532D),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 800;
+            final double horizontalPadding = isWide ? 32.0 : 20.0;
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: 20.0,
                   ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Nutrient Analytics',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Nutrient Analytics',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => _exportData(),
+                            icon: const Icon(
+                              Icons.download,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => _exportData(),
-                    icon: const Icon(Icons.download, color: Colors.white),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-              // Analytics Content
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Period and Nutrient Selection
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildDropdown(
-                                'Period',
-                                selectedPeriod,
-                                ['7 Days', '14 Days', '30 Days'],
-                                (value) =>
-                                    setState(() => selectedPeriod = value!),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: _buildDropdown(
-                                'Nutrient',
-                                selectedNutrient,
-                                ['Nitrogen', 'Phosphorus', 'Potassium'],
-                                (value) =>
-                                    setState(() => selectedNutrient = value!),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Chart Area
-                        Container(
-                          height: 200,
+                      // Analytics Content
+                      Expanded(
+                        child: Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey[200]!),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: _buildChart(filteredReadings),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Statistics Cards
-                        const Text(
-                          'Statistics',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2E2E2E),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        Expanded(
-                          child: GridView.count(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 1.5,
-                            children: [
-                              _buildStatCard(
-                                'Average',
-                                _getAverage(filteredReadings),
-                                Colors.blue,
-                              ),
-                              _buildStatCard(
-                                'Highest',
-                                _getHighest(filteredReadings),
-                                Colors.green,
-                              ),
-                              _buildStatCard(
-                                'Lowest',
-                                _getLowest(filteredReadings),
-                                Colors.orange,
-                              ),
-                              _buildStatCard(
-                                'Trend',
-                                _getTrend(filteredReadings),
-                                Colors.purple,
+                            color: Colors.white,
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(30)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
                               ),
                             ],
                           ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Period and Nutrient Selection
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildDropdown(
+                                        'Period',
+                                        selectedPeriod,
+                                        [
+                                          '7 Days',
+                                          '14 Days',
+                                          '30 Days',
+                                        ],
+                                        (value) => setState(
+                                          () => selectedPeriod = value!,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: _buildDropdown(
+                                        'Nutrient',
+                                        selectedNutrient,
+                                        [
+                                          'Nitrogen',
+                                          'Phosphorus',
+                                          'Potassium',
+                                        ],
+                                        (value) => setState(
+                                          () => selectedNutrient = value!,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+
+                                // Chart Area
+                                Container(
+                                  height: 200,
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[50],
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.grey[200]!,
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: _buildChart(filteredReadings),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+
+                                // Statistics Cards
+                                const Text(
+                                  'Statistics',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2E2E2E),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                Expanded(
+                                  child: GridView.count(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 12,
+                                    childAspectRatio: 1.8,
+                                    children: [
+                                      _buildStatCard(
+                                        'Average',
+                                        _getAverage(filteredReadings),
+                                        Colors.blue,
+                                      ),
+                                      _buildStatCard(
+                                        'Highest',
+                                        _getHighest(filteredReadings),
+                                        Colors.green,
+                                      ),
+                                      _buildStatCard(
+                                        'Lowest',
+                                        _getLowest(filteredReadings),
+                                        Colors.orange,
+                                      ),
+                                      _buildStatCard(
+                                        'Trend',
+                                        _getTrend(filteredReadings),
+                                        Colors.purple,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

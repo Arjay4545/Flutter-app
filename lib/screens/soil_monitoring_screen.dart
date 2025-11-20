@@ -249,240 +249,297 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF4DB6AC),
+      backgroundColor: const Color(0xFF14532D),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header section
-              Row(
-                children: [
-                  const Icon(Icons.eco, color: Colors.white, size: 28),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Soil Monitoring',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const Text(
-                          'for Eggplant Farming',
-                          style: TextStyle(fontSize: 16, color: Colors.white70),
-                        ),
-                      ],
-                    ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 800;
+            final double horizontalPadding = isWide ? 32.0 : 20.0;
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 900),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: 20.0,
                   ),
-                  Row(
+                  child: ListView(
+                    padding: EdgeInsets.zero,
                     children: [
-                      IconButton(
-                        onPressed: _isLoading ? null : _handleManualRefresh,
-                        icon: const Icon(Icons.refresh, color: Colors.white),
-                        tooltip: 'Refresh & Save',
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AnalyticsScreen(),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.analytics, color: Colors.white),
-                        tooltip: 'View Analytics',
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          _showArduinoSettings(context);
-                        },
-                        icon: const Icon(Icons.settings, color: Colors.white),
-                        tooltip: 'Arduino Settings',
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Eggplant illustration
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const EggplantIllustration(size: 120),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // NPK Monitoring Card
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.analytics,
-                              color: Color(0xFF4DB6AC),
-                              size: 24,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'NPK Levels',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2E2E2E),
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _getDataSourceColor().withValues(
-                                  alpha: 0.1,
+                      // Header section
+                      Row(
+                        children: [
+                          const Icon(Icons.eco,
+                              color: Colors.white, size: 28),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Soil Monitoring',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                                borderRadius: BorderRadius.circular(12),
+                                const Text(
+                                  'for Eggplant Farming',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _getLastUpdateText(),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                onPressed:
+                                    _isLoading ? null : _handleManualRefresh,
+                                icon: const Icon(
+                                  Icons.refresh,
+                                  color: Colors.white,
+                                ),
+                                tooltip: 'Refresh & Save',
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                              IconButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AnalyticsScreen(),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(
+                                  Icons.analytics,
+                                  color: Colors.white,
+                                ),
+                                tooltip: 'View Analytics',
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  _showArduinoSettings(context);
+                                },
+                                icon: const Icon(
+                                  Icons.settings,
+                                  color: Colors.white,
+                                ),
+                                tooltip: 'Arduino Settings',
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Eggplant illustration
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const EggplantIllustration(size: 120),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // NPK Monitoring Card
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(30)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
                                 children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: _getDataSourceColor(),
-                                      shape: BoxShape.circle,
+                                  const Icon(
+                                    Icons.analytics,
+                                    color: Color(0xFF4DB6AC),
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'NPK Levels',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2E2E2E),
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _dataSource,
-                                    style: TextStyle(
-                                      color: _getDataSourceColor(),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 12,
+                                  const Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          _getDataSourceColor().withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      borderRadius:
+                                          BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color: _getDataSourceColor(),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _dataSource,
+                                          style: TextStyle(
+                                            color: _getDataSourceColor(),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
+                              const SizedBox(height: 16),
 
-                        // Nitrogen (N)
-                        _buildNPKCard(
-                          'Nitrogen (N)',
-                          nitrogenLevel,
-                          Colors.blue,
-                          Icons.water_drop,
-                          'Essential for leaf growth',
-                        ),
-                        const SizedBox(height: 16),
+                              // Nitrogen (N)
+                              _buildNPKCard(
+                                'Nitrogen (N)',
+                                nitrogenLevel,
+                                Colors.blue,
+                                Icons.water_drop,
+                                'Essential for leaf growth',
+                              ),
+                              const SizedBox(height: 16),
 
-                        // Phosphorus (P)
-                        _buildNPKCard(
-                          'Phosphorus (P)',
-                          phosphorusLevel,
-                          Colors.orange,
-                          Icons.local_florist,
-                          'Promotes root development',
-                        ),
-                        const SizedBox(height: 16),
+                              // Phosphorus (P)
+                              _buildNPKCard(
+                                'Phosphorus (P)',
+                                phosphorusLevel,
+                                Colors.orange,
+                                Icons.local_florist,
+                                'Promotes root development',
+                              ),
+                              const SizedBox(height: 16),
 
-                        // Potassium (K)
-                        _buildNPKCard(
-                          'Potassium (K)',
-                          potassiumLevel,
-                          Colors.purple,
-                          Icons.energy_savings_leaf,
-                          'Improves fruit quality',
-                        ),
-                        const SizedBox(height: 24),
+                              // Potassium (K)
+                              _buildNPKCard(
+                                'Potassium (K)',
+                                potassiumLevel,
+                                Colors.purple,
+                                Icons.energy_savings_leaf,
+                                'Improves fruit quality',
+                              ),
+                              const SizedBox(height: 24),
 
-                        // Action buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed:
-                                    _isLoading ? null : _handleManualRefresh,
-                                icon: _isLoading
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                Colors.white,
+                              // Action buttons
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: _isLoading
+                                          ? null
+                                          : _handleManualRefresh,
+                                      icon: _isLoading
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child:
+                                                  CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(
+                                                  Colors.white,
+                                                ),
                                               ),
+                                            )
+                                          : const Icon(Icons.refresh),
+                                      label: Text(
+                                        _isLoading
+                                            ? 'Saving...'
+                                            : 'Refresh',
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFF4DB6AC),
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
-                                      )
-                                    : const Icon(Icons.refresh),
-                                label: Text(
-                                  _isLoading ? 'Saving...' : 'Refresh',
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF4DB6AC),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        _showRecommendations(context);
+                                      },
+                                      icon: const Icon(
+                                        Icons.lightbulb_outline,
+                                      ),
+                                      label: const Text('Tips'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor:
+                                            const Color(0xFF4DB6AC),
+                                        side: const BorderSide(
+                                          color: Color(0xFF4DB6AC),
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  _showRecommendations(context);
-                                },
-                                icon: const Icon(Icons.lightbulb_outline),
-                                label: const Text('Tips'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF4DB6AC),
-                                  side: const BorderSide(
-                                    color: Color(0xFF4DB6AC),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -503,7 +560,14 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
