@@ -47,10 +47,6 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
   }
 
   void _initializeDailyReadings() async {
-    // Generate sample historical data
-    dailyReadings = AnalyticsData.generateSampleData();
-    _addTodaysReading();
-
     // Try to load current data from Firebase
     await _loadCurrentDataFromFirebase();
   }
@@ -195,6 +191,37 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
     }
   }
 
+  Future<void> _handleManualRefresh() async {
+    if (_isLoading) return;
+
+    setState(() {
+      nitrogenLevel =
+          (50 + (50 * (DateTime.now().millisecond / 1000))).clamp(0, 100);
+      phosphorusLevel =
+          (40 + (60 * (DateTime.now().second / 60))).clamp(0, 100);
+      potassiumLevel =
+          (60 + (40 * (DateTime.now().minute / 60))).clamp(0, 100);
+
+      // Add today's reading to analytics
+      _addTodaysReading();
+    });
+
+    if (!mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    await _saveDataToFirebase();
+
+    if (!mounted) return;
+
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Data refreshed and saved to Firebase!'),
+        backgroundColor: Color(0xFF4DB6AC),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
   void _addTodaysReading() {
     final today = DateTime.now();
     final todayReading = NutrientReading(
@@ -255,6 +282,11 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
                   ),
                   Row(
                     children: [
+                      IconButton(
+                        onPressed: _isLoading ? null : _handleManualRefresh,
+                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        tooltip: 'Refresh & Save',
+                      ),
                       IconButton(
                         onPressed: () {
                           Navigator.push(
@@ -391,118 +423,13 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // Daily Summary
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF4DB6AC,
-                            ).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: const Color(
-                                0xFF4DB6AC,
-                              ).withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_today,
-                                    color: Color(0xFF4DB6AC),
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Today\'s Summary',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF2E2E2E),
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    _getLastUpdateText(),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Readings automatically saved daily for analytics tracking',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
                         // Action buttons
                         Row(
                           children: [
                             Expanded(
                               child: ElevatedButton.icon(
-                                onPressed: _isLoading
-                                    ? null
-                                    : () async {
-                                        // Refresh data and save daily reading
-                                        setState(() {
-                                          nitrogenLevel =
-                                              (50 +
-                                                      (50 *
-                                                          (DateTime.now()
-                                                                  .millisecond /
-                                                              1000)))
-                                                  .clamp(0, 100);
-                                          phosphorusLevel =
-                                              (40 +
-                                                      (60 *
-                                                          (DateTime.now()
-                                                                  .second /
-                                                              60)))
-                                                  .clamp(0, 100);
-                                          potassiumLevel =
-                                              (60 +
-                                                      (40 *
-                                                          (DateTime.now()
-                                                                  .minute /
-                                                              60)))
-                                                  .clamp(0, 100);
-
-                                          // Add today's reading to analytics
-                                          _addTodaysReading();
-                                        });
-
-                                        // Save to Firebase
-                                        if (mounted) {
-                                          final messenger =
-                                              ScaffoldMessenger.of(context);
-                                          await _saveDataToFirebase();
-
-                                          // Show success message
-                                          messenger.showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Data refreshed and saved to Firebase!',
-                                              ),
-                                              backgroundColor: Color(
-                                                0xFF4DB6AC,
-                                              ),
-                                              duration: Duration(seconds: 2),
-                                            ),
-                                          );
-                                        }
-                                      },
+                                onPressed:
+                                    _isLoading ? null : _handleManualRefresh,
                                 icon: _isLoading
                                     ? const SizedBox(
                                         width: 16,
@@ -855,7 +782,7 @@ class _SoilMonitoringScreenState extends State<SoilMonitoringScreen> {
     if (lastUpdate != null) {
       return 'Last update: ${_formatTime(lastUpdate)}';
     } else {
-      return '${dailyReadings.length} days tracked';
+      return 'Waiting for sensor data';
     }
   }
 }
